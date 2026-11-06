@@ -1,0 +1,11 @@
+{
+  "name": "deployer-api-server",
+  "type": "module",
+  "scripts": {
+    "start": "bun src/main.ts",
+    "typecheck": "bun check"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}
