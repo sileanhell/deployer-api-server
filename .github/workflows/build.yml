@@ -1,0 +1,60 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - run: bun install
+
+      - run: bun run typecheck
+
+  build:
+    name: ${{ matrix.target }}
+    needs: typecheck
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - linux-x64
+          - linux-x64-musl
+          - linux-arm64
+          - linux-arm64-musl
+          - windows-x64
+          - windows-arm64
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - run: bun install
+
+      - name: Build
+        run: |
+          ext=""; [[ "${{ matrix.target }}" == windows-* ]] && ext=".exe"
+          bun build src/main.ts --compile --minify --sourcemap=none \
+            --target="bun-${{ matrix.target }}" \
+            --outfile "dist/deployer-${{ matrix.target }}$ext"
+          ls -la dist
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: deployer-${{ matrix.target }}
+          path: dist/
+          if-no-files-found: error
